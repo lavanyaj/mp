@@ -5,9 +5,13 @@ import numpy as np
 import time
 
 ###################### Global constants ########################
-num_instances = 1
+num_instances = 10000
 max_iterations = 10000
 max_capacity = 100
+nflows_per_link = 100
+nswitches = 20
+np.random.seed(241)
+random.seed(241)
 ################################################################
 
 class MPMaxMin:
@@ -99,6 +103,7 @@ class MPMaxMin:
             #print "numsat " + str(numsat)
             #print "maxsat " + str(maxsat)
             new_rate[l] = self.c[l] - sumsat + maxsat
+            assert(numsat < nflows)
             if (numsat < nflows):
                 new_rate[l] = (self.c[l]-sumsat)/(nflows - numsat)
                 #print "new_rate " + str(new_rate[l])
@@ -254,47 +259,44 @@ def gen_large_chain(nports):
     
 def main():
     np.random.seed(241)
-    plt.close("all")
+
     f = open("results.txt", "w")
     #A = np.array([[1,0],
     #              [1,1],
     #              [1,0],
     #              [0,1]])       
     #c = np.array([[1.0, 1.0]]).T
-    num_steps = 10000
-    num_instances = 10
-    for (nflows_per_link, nswitches) in [(50,100)]:
-        print num_steps, " steps of max min for ", num_instances,\
-            " random instance with ", nflows_per_link,\
-            " flows/ link, ", nswitches, " switches"
-        for i in range(num_instances):
-            A,c = gen_random_instance(nswitches=nswitches,\
-                                      nflows_per_link=nflows_per_link, safe=True)  
-            wf_maxmin = MPMaxMin(A, c)
+    print max_iterations, " steps of max min for ", num_instances,\
+        " random instance with ", nflows_per_link,\
+        " flows/ link, ", nswitches, " switches"
+    for i in range(num_instances):
+        A,c = gen_random_instance(nswitches=nswitches,\
+                                  nflows_per_link=nflows_per_link, safe=True)  
+        wf_maxmin = MPMaxMin(A, c)
 
-            steps_to_converge = -1
-            start_time = time.time()
-            for j in range(1, num_steps+1):
-                wf_maxmin.step()
-                linf_err = max(np.abs(wf_maxmin.x - wf_maxmin.maxmin_x))
-                l2_err = np.linalg.norm(wf_maxmin.x - wf_maxmin.maxmin_x)
+        steps_to_converge = -1
+        start_time = time.time()
+        for j in range(1, max_iterations+1):
+            wf_maxmin.step()
+            linf_err = max(np.abs(wf_maxmin.x - wf_maxmin.maxmin_x))
+            l2_err = np.linalg.norm(wf_maxmin.x - wf_maxmin.maxmin_x)
+            if j%10 == 0 or linf_err < 1e-8:
                 print "instance ", i, "step ", j, ", linf_err ",\
                     linf_err, ", l2_err ", l2_err,\
                     ", elapsed time", (time.time()-start_time)
                 sys.stdout.flush()
-                if linf_err < 1e-10:
-                    steps_to_converge = j
-                    break
+            if linf_err < 1e-10:
+                steps_to_converge = j
+                break
                 
-            if (steps_to_converge > 0):
-                f.write("instance %d converged after %d steps.\n"%(i, last_step))
-                print "instance ", i, "converged after ", steps_to_converge, " steps."
-            else:
-                f.write("instance %d converged after %d steps.\n"%(i, num_steps))
-                print "instance ", i, "did not converge after ", num_steps, " steps."
+        if (steps_to_converge > 0):
+            f.write("instance %d converged after %d steps.\n"%(i, steps_to_converge))
+            print "instance ", i, "converged after ", steps_to_converge, " steps."
+        else:
+            f.write("instance %d converged after %d steps.\n"%(i, max_iterations))
+            print "instance ", i, "did not converge after ", max_iterations, " steps."
             wf_maxmin.print_details()
     f.close()   
-    
                     
 if __name__ == '__main__':
     main()
