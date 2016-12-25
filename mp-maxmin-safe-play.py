@@ -5,10 +5,10 @@ import numpy as np
 import time
 
 ###################### Global constants ########################
-num_instances = 1
+num_instances = 2000
 max_iterations = 10000
 max_capacity = 100
-nflows_per_link = 2
+nflows_per_link = 40
 nswitches = 10
 np.random.seed(241)
 random.seed(241)
@@ -131,7 +131,7 @@ class MPMaxMin:
                                                                            
     def step(self):
         self.t += 1
-        
+            
         #print '$$$$$$$$ t = ', self.t
         #print 'flow_to_link='
         #print self.flow_to_link
@@ -139,8 +139,23 @@ class MPMaxMin:
         #print 'link_to_flow='
         #print self.link_to_flow
         self.update_flow_to_link()
-        #self.print_details()
-              
+
+        self.last_converged = 0
+        for i in range(1, self.maxmin_level):
+            level_flows = self.wf_flows[np.where(self.wf_flow_levels==i)]
+            level_x = self.x[level_flows]
+            level_maxmin = self.maxmin_x[level_flows]
+            linf_err = max(np.abs(level_maxmin - level_x))
+            if (linf_err > 1e-10):
+                # print "level ", i, " hasn't converged yet"
+                # print 'x=', level_x.T
+                # print 'maxmin=', level_maxmin.T
+                # print 'linf_err=', linf_err
+                break
+            self.last_converged += 1
+
+
+        self.print_details()
         self.xs = np.column_stack((self.xs, self.x))
         self.errors = np.column_stack((self.errors, max((np.abs(self.x - self.maxmin_x)/self.x)*100)))
 
@@ -199,6 +214,34 @@ class MPMaxMin:
                                         
     def print_details(self):
         print 'iteration=', self.t
+        print 'last_converged level=', self.last_converged
+
+        rates_hi = []
+        rates_lo = []
+        maxmin = []
+        for i in range(self.last_converged, self.maxmin_level):
+            level_flows = self.wf_flows[np.where(self.wf_flow_levels==i)]
+            if len(level_flows) == 0:
+                continue
+            level_x = self.x[level_flows]
+            level_maxmin = self.maxmin_x[level_flows]
+            if i > self.last_converged:
+                rates_lo.append(min(level_x))
+                rates_hi.append(max(level_x))
+                # if i < self.last_converged+3:
+                #     print 'min(x_', i, ')= ', min(level_x)
+                #     print 'max(x_', i, ')= ', max(level_x)
+            maxmin.append(level_maxmin[0])
+
+        if len(rates_lo) > 0 and len(rates_hi) > 0:
+            if self.last_converged > 0:
+                if (min(rates_lo) < maxmin[0]):
+                    print 'rates of flows in level >', self.last_converged
+                    print 'min(x)=', min(rates_lo), ', max(x)=', max(rates_hi), 
+                    for diff in range(min(2, len(maxmin))):
+                        print ' maxmin(', self.last_converged+diff, ')=', maxmin[diff],
+                    assert(min(rates_lo) >= maxmin[0])
+
         print 'x=', self.x[self.wf_flows].T
         print 'maxmin=', self.maxmin_x[self.wf_flows].T
         print 'l2 error=', np.linalg.norm(self.x - self.maxmin_x)
@@ -332,6 +375,7 @@ def main():
         " random instance with ", nflows_per_link,\
         " flows/ link, ", nswitches, " switches"
     for i in range(num_instances):
+        print 'instance ', i
         A,c = gen_random_instance(nswitches=nswitches,\
                                   nflows_per_link=nflows_per_link, safe=True)  
         wf_maxmin = MPMaxMin(A, c)
