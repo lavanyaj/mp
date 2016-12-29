@@ -1,0 +1,4 @@
+waterfilling levels for 10 switches instance #1 matches up. up to last level 89 sth
+cp3a is from v3 (original numpy)
+cp4a is from v4 (mpmath)
+only modified waterfilling

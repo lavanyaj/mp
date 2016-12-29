@@ -1,0 +1,8 @@
+- tried sync-frugal-v1 (bos) on 200 link 100 flow instances
+- ran 200 so far for up to 10K iterations, only 72 "converge", some take 1000s of steps
+
+- next step: dig into if precision is an issue, maybe track how much precision error accumulates per link
+(e.g., by counting how many numsats went into each link as numsat(l1) = sum(numsat(l2)) where l2: link such that a flow through l2 is sat at l1)
+claim, num will exceed 10^10 in 20 steps
+
+- also next step, try variant where flow that was sat is checked against adjust rate (as close to frugal as we can get)

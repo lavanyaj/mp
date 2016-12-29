@@ -1,0 +1,9 @@
+Looks like this version doesn't converge
+- Tried on a 10K link example, shouldn't take more than 10K rounds? But doesn't converge in 10K rounds either. [Possible that it needs 40K rounds]
+- Checked condition that flow rates of levels >i should be at least big as last level that converged, not true in instance #98
+
+Maybe one last try would be to try on 1K instances of
+20 switch (400 links) and 100 flows per link (4000 flows)
+400 links shouldn't take more than 1600 rounds?
+
+num flows * 10 links/ flow = 100 flow/link * 400 links

@@ -1,0 +1,3 @@
+I'm running the large simulations using the high precision library to see if they give the same results. If they do, I'll know that it's not a precision problem but it's the sync. frugal scheme itself that is to blame.
+
+The error from ideal is exactly the same for instance #2 that doesn't converge even up to 200 steps see cp3 and cp5
